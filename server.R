@@ -48,9 +48,10 @@ function(input, output, session) {
       collect() %>% 
       group_by(id,name) %>%
       arrange(time) %>%
-      mutate(freq = abs(bikesAvailable-lag(bikesAvailable)),
-             name = factor(name, levels = dist$id_y)) %>%
-      ungroup() -> d12
+      mutate(freq = abs(bikesAvailable-lag(bikesAvailable))) %>%
+      ungroup() %>% 
+      # ennustekuvat oikeaan järjestykseen
+      mutate(name = factor(name, levels = dist$name_y))-> d12
     
     dbDisconnect(con)
     return(d12)
