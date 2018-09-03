@@ -37,12 +37,10 @@ function(input, output, session) {
     aika_nyt <-  hour_now + minute_now
     
     tbl(con, "KAUPUNKIFILLARIT2018") %>% 
-      mutate(id = as.integer(id)) %>% 
-      # filter(id == input$tellinki) %>%
-      filter(id %in% uniqs) %>%
-      # filter(bikesAvailable == 2) %>%
-      # filter(id == unique(dist$id_x)) %>% 
-      filter(hour >=  (hour_now-2),
+      mutate(id = as.integer(id)) %>%
+      # filter(id == 591,
+      filter(id == input$tellinki,
+      hour >=  (hour_now-2),
              hour <= (hour_now+4),
              weekdays == weekday_now) %>%
       collect() %>% 
@@ -83,12 +81,16 @@ function(input, output, session) {
 
   output$saa_realtime <- renderTable({
     saa <- data_input_saa()
-    saa[c(1,3,7,10,12)]
+    saa[c(1,3,7,10,12)] %>% 
+      mutate(Asema = sub("Helsinki |Espoo ", "", Asema))
+    
   })
   
   output$saa_ennuste <- renderTable({
     ennuste <- data_input_saaennuste()
-    ennuste[1:10, c(1,3,5,8)]
+    ennuste <- ennuste[1:10, c(1,3,5,8)]
+    ennuste %>% 
+      mutate(Ajankohta = sub("\\.2018", "", Ajankohta))
   })
   
 # output$box_realtime <- renderValueBox({
@@ -180,7 +182,11 @@ output$map_realtime <- renderLeaflet({
 # output$plot_forecast <- renderTable({
 output$plot_forecast <- renderPlot({
   
+  withProgress(message = 'Odota hetki', value = 0, {
+  incProgress(1/2, detail = "Louhitaan dataa")
   d12 <- data_input_db()
+  
+
   
   time_now <- Sys.time()
   yday_now <- yday(time_now)
@@ -189,6 +195,8 @@ output$plot_forecast <- renderPlot({
   aika_nyt <-  hour_now + minute_now
   
   # head(d12)
+  
+  incProgress(2/2, detail = "Piirretään kuvaa")
   
   ggplot(data = d12,
          aes(x=aika,y=bikesAvailable,group=yday)) +
@@ -221,6 +229,7 @@ output$plot_forecast <- renderPlot({
                           Sys.time())) +
     theme(plot.margin = unit(c(5, 2, 5, 2), "mm")) +
     facet_wrap(~name, ncol = 1, scales = "free")
+  })
 })
 
   
