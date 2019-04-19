@@ -17,7 +17,7 @@ library(lubridate)
 # d <- d[,c("id","name","x","y","bikesAvailable","spacesAvailable", "state")]
 # d$time <- Sys.time()
 # d$timen <- as.numeric(d$time)
-# d$id <- as.integer(d$id)
+# # d$id <- as.integer(d$id)
 # tellingit <- d$id
 # names(tellingit) <- d$name
 # saveRDS(tellingit, "./data/tellingit.RDS")
@@ -25,12 +25,12 @@ tellingit <- readRDS("./data/tellingit.RDS")
 distanssi <- readRDS("./data/distanssi.RDS")
 points <- readRDS("./data/points.RDS")
 
-create_con <- function(){
-  library(DBI)
-  library(RMariaDB)
-  con <- dbConnect(RMariaDB::MariaDB(), group = "db-tellinki") 
-  return(con)
-}
+# create_con <- function(){
+#   library(DBI)
+#   library(RMariaDB)
+#   con <- dbConnect(RMariaDB::MariaDB(), group = "db-tellinki") 
+#   return(con)
+# }
 
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 
@@ -61,8 +61,8 @@ create_con <- function(){
 # SpatialPointsDataFrame(coords = d[,c("x", "y")], d[,c("name","id")]) %>%
 #   st_as_sf() -> dsf
 # saveRDS(dsf, "./data/points.RDS")
-
 # 
+# # 
 # nc_dist_mat <- st_distance(dsf, dsf, by_element = FALSE)
 # library(reshape2)
 # dm <- melt(nc_dist_mat)
@@ -80,8 +80,10 @@ create_con <- function(){
 # df1 <- left_join(dm,d1, by = c("Var1" = "rn")) %>%
 #   left_join(.,d2, by = c("Var2" = "rn")) %>%
 #   mutate(value = value * 100000)
-# 
+# # 
 # saveRDS(df1, "./data/distanssi.RDS")
+# 
+# df2 <- readRDS("./data/distanssi.RDS")
 
 # df1 %>%
 #   filter(name_x == "Kaivopuisto") %>%

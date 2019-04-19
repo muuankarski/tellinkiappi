@@ -5,9 +5,9 @@ function(request) {
     dashboardHeader(
       title = "Tellinkiappi"),
       dashboardSidebar(
-      selectInput("tellinki", "Valitse tellinki", choices = tellingit, selected = 85),
+      selectInput("tellinki", "Valitse tellinki", choices = tellingit, selected = "082"),
       sliderInput("distance", "Montako metriä jaksat kävellä", min = 0, max = 1500,
-      step = 100, value = 700)
+      step = 100, value = 750)
       # ,selectInput("ajankohta", "Valitse ajankohta", choices = c("nyt", "mennyt"))
       ,shiny::bookmarkButton(label = "Jaa valinnat")
 

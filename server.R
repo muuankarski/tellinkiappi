@@ -17,44 +17,44 @@ function(input, output, session) {
   })
   
   
-  data_input_db <- reactive({
-    
-    readRDS("./data/distanssi.RDS") %>% 
-    # istanssi %>%
-      filter(id_x %in% input$tellinki) %>%
-      filter(value <= input$distance) %>% 
-      arrange(value) -> dist
-    
-    uniqs <- dist$id_y
-    
-    con <- create_con()
-    
-    time_now <- Sys.time()
-    yday_now <- yday(time_now)
-    hour_now <- hour(time_now)
-    weekday_now <- weekdays(time_now)
-    minute_now <- minute(time_now)/60
-    aika_nyt <-  hour_now + minute_now
-    
-    tbl(con, "KAUPUNKIFILLARIT2018") %>% 
-      mutate(id = as.integer(id)) %>%
-      # filter(id == 591,
-      filter(id == input$tellinki,
-      hour >=  (hour_now-2),
-             hour <= (hour_now+4),
-             weekdays == weekday_now) %>%
-      collect() %>% 
-      group_by(id,name) %>%
-      arrange(time) %>%
-      mutate(freq = abs(bikesAvailable-lag(bikesAvailable))) %>%
-      ungroup() %>% 
-      # ennustekuvat oikeaan järjestykseen
-      mutate(name = factor(name, levels = dist$name_y))-> d12
-    
-    dbDisconnect(con)
-    return(d12)
-
-  })
+  # data_input_db <- reactive({
+  #   
+  #   readRDS("./data/distanssi.RDS") %>% 
+  #   # istanssi %>%
+  #     filter(id_x %in% input$tellinki) %>%
+  #     filter(value <= input$distance) %>% 
+  #     arrange(value) -> dist
+  #   
+  #   uniqs <- dist$id_y
+  #   
+  #   con <- create_con()
+  #   
+  #   time_now <- Sys.time()
+  #   yday_now <- yday(time_now)
+  #   hour_now <- hour(time_now)
+  #   weekday_now <- weekdays(time_now)
+  #   minute_now <- minute(time_now)/60
+  #   aika_nyt <-  hour_now + minute_now
+  #   
+  #   tbl(con, "KAUPUNKIFILLARIT2018") %>% 
+  #     mutate(id = as.integer(id)) %>%
+  #     # filter(id == 591,
+  #     filter(id == input$tellinki,
+  #     hour >=  (hour_now-2),
+  #     hour <= (hour_now+4),
+  #     weekdays == weekday_now) %>%
+  #     collect() %>% 
+  #     group_by(id,name) %>%
+  #     arrange(time) %>%
+  #     mutate(freq = abs(bikesAvailable-lag(bikesAvailable))) %>%
+  #     ungroup() %>% 
+  #     # ennustekuvat oikeaan järjestykseen
+  #     mutate(name = factor(name, levels = dist$name_y))-> d12
+  #   
+  #   dbDisconnect(con)
+  #   return(d12)
+  # 
+  # })
   
   data_input_saa <- reactive({
     
@@ -114,7 +114,7 @@ output$tbl_realtime <- renderTable({
   
   # readRDS("./data/distanssi.RDS") %>%
     distanssi %>%
-    filter(id_x %in% input$tellinki) %>%
+    filter(id_x %in% as.integer(input$tellinki)) %>%
     filter(value <= input$distance) -> dist
 
   # dist
@@ -148,7 +148,7 @@ output$map_realtime <- renderLeaflet({
   
   # readRDS("./data/distanssi.RDS") %>%
     distanssi %>%
-    filter(id_x %in% input$tellinki) %>%
+    filter(id_x %in% as.integer(input$tellinki)) %>%
     filter(value <= input$distance) -> dist
 
   data_input_realtime() %>%
@@ -162,7 +162,7 @@ output$map_realtime <- renderLeaflet({
     domain = points2$bikesAvailable)
     
   leaflet(points2) %>% 
-    leaflet::addTiles() %>% 
+    leaflet::addProviderTiles(providers$CartoDB.Positron) %>% 
     addCircleMarkers(color = ~pal(bikesAvailable), 
                      label = ~paste(name,bikesAvailable), 
                      labelOptions = labelOptions(noHide = T, direction = "auto",  
@@ -183,31 +183,47 @@ output$map_realtime <- renderLeaflet({
 output$plot_forecast <- renderPlot({
   
   withProgress(message = 'Odota hetki', value = 0, {
-  incProgress(1/2, detail = "Louhitaan dataa")
-  d12 <- data_input_db()
-  
-
+  incProgress(1/3, detail = "Louhitaan dataa")
+  d12 <- readRDS(glue::glue("/home/aurelius/local_data/kaupunkifillari_data/ennustedatat/{input$tellinki}.RDS"))
+  # d12 <- readRDS(glue::glue("~/local_data/kaupunkifillari_data/ennustedatat/107.RDS"))
+  d12$group <- glue::glue("{d12$yday}{d12$year}")
   
   time_now <- Sys.time()
-  yday_now <- yday(time_now)
+  # yday_now <- yday(time_now)
   hour_now <- hour(time_now)
+  # year_now <- year(time_now)
   minute_now <- minute(time_now)/60
   aika_nyt <-  hour_now + minute_now
+  
+  dd <- data_input_realtime()
+  
   
   # head(d12)
   
   incProgress(2/2, detail = "Piirretään kuvaa")
   
-  ggplot(data = d12,
-         aes(x=aika,y=bikesAvailable,group=yday)) +
-    geom_line(alpha = .2) +
-    geom_point(data = d12 %>% filter(yday == yday_now),
-               aes(x=aika,y=bikesAvailable,group=yday), fill = "orange", color = "white", shape = 21) +
-    geom_line(data = d12 %>% filter(yday == yday_now),
-              aes(x=aika,y=bikesAvailable,group=yday), color = "orange") +
-    geom_smooth(aes(group = 1), show.legend = FALSE) +
+  data_nyt <- read.csv("/home/aurelius/sovellukset/tellinkiappi/paivadata.csv", stringsAsFactors = FALSE)
+  # data_nyt <- data_nyt %>% filter(id == input$tellinki)
+  data_nyt <- data_nyt %>% filter(id %in% as.integer(input$tellinki))
+  data_nyt$time2 <- as.POSIXlt(data_nyt$time)
+  data_nyt$aika <- hour(data_nyt$time2) + minute(data_nyt$time2)/60
+  # year_now <- year(time_now)
+  
+  # data_nyt <- dd %>% filter(id == 107) %>% mutate(aika = aika_nyt) %>% as_tibble()
+  
+    ggplot(data = d12,
+         aes(x=aika,y=bikesAvailable,group=group)) +
+    geom_line(alpha = .1) +
+      geom_line(data = data_nyt,
+                aes(x=aika,y=bikesAvailable,group=1), color = "orange") +
+      geom_smooth(aes(group = 1), show.legend = FALSE) +
+    geom_point(data = data_nyt[nrow(data_nyt),],
+               aes(x = aika, y=bikesAvailable, group = 1), fill = "orange", size = 3, color = "white", shape = 21, stroke = 2, alpha = .6) +
+      geom_label(data = data_nyt[nrow(data_nyt),],
+                 aes(x = aika, y=bikesAvailable, group = 1, label = glue::glue("{bikesAvailable} vapaana")), fill = "orange", size = 3, color = "white", shape = 21,  family = "Roboto Condensed", nudge_y = 1, alpha = .6) +
+
     # geom_text(color = "white", family = "Roboto Condensed", size = 2.5) +
-    theme_ipsum_ps(plot_title_face = NULL, plot_title_size = 12,
+    theme_ft_rc(plot_title_face = NULL, plot_title_size = 12,
                    subtitle_size = 10, subtitle_face = "italic",
                    plot_title_margin = 3, subtitle_margin = 1) +
     # scale_color_startrek() +
@@ -222,13 +238,14 @@ output$plot_forecast <- renderPlot({
     # scale_x_reverse() +
     labs(x = "tunti", y = "lainauksia/palautuksia per tunti",
          color = NULL,
-         title = paste0("Ennuste lähitellingeille: ", format(time_now, format = "%Ana %e.%m"), " kello ",format(time_now, format = "%H:%M")),
-         subtitle = "Oranssi viiva on tämän päivän tilanne!",
+         title = glue::glue("Ennuste tellingille {names(tellingit[tellingit == input$tellinki])} kello {format(time_now, format = '%H:%M')}"),
+         # title = glue::glue("{input$tellinki)"),
+         subtitle = "Tämä päivä oranssilla!",
          caption = paste0("Data: HSL
          (C) Tellinkibotti\n",
                           Sys.time())) +
-    theme(plot.margin = unit(c(5, 2, 5, 2), "mm")) +
-    facet_wrap(~name, ncol = 1, scales = "free")
+    theme(plot.margin = unit(c(5, 2, 5, 2), "mm"))# +
+    # facet_wrap(~name, ncol = 1, scales = "free")
   })
 })
 
