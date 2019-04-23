@@ -24,7 +24,8 @@ function(request) {
         tabsetPanel(
           tabPanel("Vapaana"
                    # ,tags$h4("Pyöriä vapaana:")
-                   ,tableOutput("tbl_realtime")
+                   # ,tableOutput("tbl_realtime")
+                   ,uiOutput("tbl_realtime")
 
           ),
           tabPanel("Kartta"
@@ -32,7 +33,7 @@ function(request) {
                    # ,valueBoxOutput("box_realtime")
                    ,leafletOutput("map_realtime")
           ),
-          tabPanel("Ennuste"
+          tabPanel("Trendi"
                    # ,tags$h4("Lineraarinen regressio:")
                    # ,valueBoxOutput("box_realtime")
                    # ,tableOutput("plot_forecast")

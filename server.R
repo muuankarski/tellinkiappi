@@ -2,6 +2,11 @@ library(lubridate)
 library(ggplot2)
 library(hrbrthemes)
 library(ggsci)
+library(sparkline)
+library(formattable)
+library(kableExtra)
+library(htmltools)
+
 Sys.setlocale("LC_ALL" ,"fi_FI.UTF-8")
 ## server.R ##
 function(input, output, session) {
@@ -16,45 +21,6 @@ function(input, output, session) {
 
   })
   
-  
-  # data_input_db <- reactive({
-  #   
-  #   readRDS("./data/distanssi.RDS") %>% 
-  #   # istanssi %>%
-  #     filter(id_x %in% input$tellinki) %>%
-  #     filter(value <= input$distance) %>% 
-  #     arrange(value) -> dist
-  #   
-  #   uniqs <- dist$id_y
-  #   
-  #   con <- create_con()
-  #   
-  #   time_now <- Sys.time()
-  #   yday_now <- yday(time_now)
-  #   hour_now <- hour(time_now)
-  #   weekday_now <- weekdays(time_now)
-  #   minute_now <- minute(time_now)/60
-  #   aika_nyt <-  hour_now + minute_now
-  #   
-  #   tbl(con, "KAUPUNKIFILLARIT2018") %>% 
-  #     mutate(id = as.integer(id)) %>%
-  #     # filter(id == 591,
-  #     filter(id == input$tellinki,
-  #     hour >=  (hour_now-2),
-  #     hour <= (hour_now+4),
-  #     weekdays == weekday_now) %>%
-  #     collect() %>% 
-  #     group_by(id,name) %>%
-  #     arrange(time) %>%
-  #     mutate(freq = abs(bikesAvailable-lag(bikesAvailable))) %>%
-  #     ungroup() %>% 
-  #     # ennustekuvat oikeaan järjestykseen
-  #     mutate(name = factor(name, levels = dist$name_y))-> d12
-  #   
-  #   dbDisconnect(con)
-  #   return(d12)
-  # 
-  # })
   
   data_input_saa <- reactive({
     
@@ -93,47 +59,82 @@ function(input, output, session) {
       mutate(Ajankohta = sub("\\.2018", "", Ajankohta))
   })
   
-# output$box_realtime <- renderValueBox({
-#   
-#   data_input_realtime() %>% 
-#     filter(id %in% input$tellinki) %>% 
-#     select(name,bikesAvailable) -> tbl
-#   
-#   valueBox(
-#     value = tbl$bikesAvailable,
-#     subtitle = tbl$name,
-#     icon = icon("bicycle"),
-#     color = if (tbl$bikesAvailable > 3) "green" else if (tbl$bikesAvailable %in% 1:3) "yellow" else "red")
-# })
-
   output$test <- renderText({
     data_input_realtime() %>% pull(name) 
   })
   
-output$tbl_realtime <- renderTable({
+output$tbl_realtime <- renderUI({
   
-  # readRDS("./data/distanssi.RDS") %>%
-    distanssi %>%
+  distanssi %>%
     filter(id_x %in% as.integer(input$tellinki)) %>%
     filter(value <= input$distance) -> dist
+  
+  # readRDS("./data/distanssi.RDS") %>%
+  # distanssi %>%
+  #   dplyr::filter(id_x %in% c("591")) %>%
+  #   dplyr::filter(value <= 800) -> dist
+  
+  
+  data_nyt <- read.csv("/home/aurelius/sovellukset/tellinkiappi/paivadata.csv", stringsAsFactors = FALSE) %>% 
+    tibble::as_tibble() %>% 
+    dplyr::filter(id %in% unique(c(dist$id_y,dist$id_x))) %>% 
+    group_by(id) %>% 
+    arrange(desc(time)) %>% 
+    slice(1:24) %>% 
+    ungroup() #%>% select(id,bikesAvailable,time)
+  # data_nyt <- data_nyt %>% filter(id == input$tellinki)
+  data_nyt$time2 <- as.POSIXct(data_nyt$time)
+  data_nyt$aika <- hour(data_nyt$time2) + minute(data_nyt$time2)/60
 
   # dist
   #
-  library(kableExtra)
-  data_input_realtime() %>%
-    left_join(., dist, by = c("id" = "id_y")) %>%
-    filter(!is.na(value)) %>% 
-    mutate(name = paste0("<a href='https://maps.google.fi/?q=",y,",",x,"'>",name,"</a>")) %>%
-    select(name,bikesAvailable, value) %>%
+  dat_tbl <- data_nyt %>% 
+    filter(time == max(time2, na.rm = TRUE)) %>% 
+    select(id,name,bikesAvailable,x,y) %>% 
+    left_join(.,dist, by = c("id" = "id_y")) %>% 
+    select(-name_x,-name_y,-id_x,-Var2,-Var1)
+
+  
+  
+  
+  dat_tbl %>% 
+    mutate(
+           name = glue::glue("<a href='http://82.181.178.246/tellinkiappi/?_inputs_&distance=750&sidebarCollapsed=false&sidebarItemExpanded=null&tellinki=\"{stringr::str_pad(id, 3, pad = '0')}\"'>{name}</a>"),
+           value_hidden = value,
+value = glue::glue("<a target = '_blank' href='https://maps.google.fi/?q={y},{x}'>{round(value, 0)}</i>
+</a>")) %>%
+    select(id,name,bikesAvailable,value,value_hidden) %>%
     arrange(value) %>% 
     mutate(bikesAvailable = cell_spec(bikesAvailable,
                                       background = ifelse(bikesAvailable >= 5, "#33ff99",
-                                                          ifelse(bikesAvailable %in% 1:4, "yellow", "#ff8080"))),
-           value = round(value, 0)) %>%
+                                                          ifelse(bikesAvailable %in% 1:4, "yellow", "#ff8080")))) %>%
     rename(tellinki = name,
            vapaana = bikesAvailable,
-           `matkaa (m)` = value)
-   }, sanitize.text.function = function(x) x)
+           `matkaa (m)` = value) -> df
+  
+  
+  # output$Table <- renderUI({
+    res <- data_nyt %>% 
+      group_by(id) %>% 
+      arrange(time) %>% 
+      # use new sparkline helper methods
+      summarise(`viimeinen 2h`=spk_chr(c(bikesAvailable))) %>%
+      left_join(df) %>% 
+      arrange(value_hidden) %>% 
+      select(tellinki,vapaana,`viimeinen 2h`,`matkaa (m)`) %>% 
+      format_table() %>%
+      htmltools::HTML() %>%
+      div() %>%
+      # use new sparkline helper for adding dependency
+      spk_add_deps() %>%
+      # use column for bootstrap sizing control
+      # but could also just wrap in any tag or tagList
+      {column(width=6, .)}
+    
+    res
+  
+})
+  # }, sanitize.text.function = function(x) x)
   
   
   # valueBox(
@@ -194,7 +195,10 @@ output$plot_forecast <- renderPlot({
   # year_now <- year(time_now)
   minute_now <- minute(time_now)/60
   aika_nyt <-  hour_now + minute_now
-  
+  # Valitaan vaan sama viikonpäivä!
+  Sys.setlocale("LC_ALL" ,"fi_FI.UTF-8")
+  d12 <- d12[d12$weekdays == weekdays(time_now), ]
+
   dd <- data_input_realtime()
   
   
@@ -213,7 +217,7 @@ output$plot_forecast <- renderPlot({
   
     ggplot(data = d12,
          aes(x=aika,y=bikesAvailable,group=group)) +
-    geom_line(alpha = .1) +
+    geom_line(alpha = .3) +
       geom_line(data = data_nyt,
                 aes(x=aika,y=bikesAvailable,group=1), color = "orange") +
       geom_smooth(aes(group = 1), show.legend = FALSE) +
