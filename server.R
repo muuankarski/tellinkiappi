@@ -197,7 +197,13 @@ output$plot_forecast <- renderPlot({
   aika_nyt <-  hour_now + minute_now
   # Valitaan vaan sama viikonpäivä!
   Sys.setlocale("LC_ALL" ,"fi_FI.UTF-8")
-  d12 <- d12[d12$weekdays == weekdays(time_now), ]
+  if (weekdays(time_now) %in% c("lauantai","sunnuntai")){
+    viikonpaivat <- c("lauantai","sunnuntai")
+  } else {
+    viikonpaivat <- c("maanantai","tiistai","keskiviikko","torstai","perjantai")
+  }
+
+  d12 <- d12[d12$weekdays %in% viikonpaivat, ]
 
   dd <- data_input_realtime()
   
