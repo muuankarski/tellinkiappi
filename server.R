@@ -6,6 +6,7 @@ library(sparkline)
 library(formattable)
 library(kableExtra)
 library(htmltools)
+library(dashboardthemes)
 
 Sys.setlocale("LC_ALL" ,"fi_FI.UTF-8")
 ## server.R ##
@@ -105,7 +106,7 @@ value = glue::glue("<a target = '_blank' href='https://maps.google.fi/?q={y},{x}
 </a>")) %>%
     select(id,name,bikesAvailable,value,value_hidden) %>%
     arrange(value) %>% 
-    mutate(bikesAvailable = cell_spec(bikesAvailable,
+    mutate(bikesAvailable = cell_spec(bikesAvailable,color = "black",
                                       background = ifelse(bikesAvailable >= 5, "#33ff99",
                                                           ifelse(bikesAvailable %in% 1:4, "yellow", "#ff8080")))) %>%
     rename(tellinki = name,
@@ -156,20 +157,20 @@ output$map_realtime <- renderLeaflet({
     left_join(., dist, by = c("id" = "id_y")) %>%
     filter(!is.na(value)) %>% 
     select(name,bikesAvailable, value) %>% 
-    right_join(points,.) -> points2
+    right_join(points,.)-> points2
   
   pal <- colorNumeric(
     palette = "RdYlGn",
-    domain = points2$bikesAvailable)
+    domain = NULL)
     
   leaflet(points2) %>% 
     leaflet::addProviderTiles(providers$CartoDB.Positron) %>% 
-    addCircleMarkers(color = ~pal(bikesAvailable), 
+    addCircleMarkers(color = ~pal(sqrt(bikesAvailable)), 
                      label = ~paste(name,bikesAvailable), 
                      labelOptions = labelOptions(noHide = T, direction = "auto",  
                                                  style = list(
-                                                   "color" = "grey",
-                                                   "font-family" = "Open Sans",
+                                                   "color" = "black",
+                                                   "font-family" = "Source Sans Pro",
                                                    "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
                                                    "font-size" = "10px",
                                                    "border-color" = "rgba(0,0,0,0.5)",
