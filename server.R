@@ -100,7 +100,7 @@ output$tbl_realtime <- renderUI({
   
   dat_tbl %>% 
     mutate(
-           name = glue::glue("<a href='http://82.181.178.246/tellinkiappi/?_inputs_&distance=750&sidebarCollapsed=false&sidebarItemExpanded=null&tellinki=\"{stringr::str_pad(id, 3, pad = '0')}\"'>{name}</a>"),
+           name = glue::glue("<a href='http://82.181.82.12/tellinkiappi/?_inputs_&distance=750&sidebarCollapsed=false&sidebarItemExpanded=null&tellinki=\"{stringr::str_pad(id, 3, pad = '0')}\"'>{name}</a>"),
            value_hidden = value,
 value = glue::glue("<a target = '_blank' href='https://maps.google.fi/?q={y},{x}'>{round(value, 0)}</i>
 </a>")) %>%
@@ -156,18 +156,26 @@ output$map_realtime <- renderLeaflet({
   data_input_realtime() %>%
     left_join(., dist, by = c("id" = "id_y")) %>%
     filter(!is.na(value)) %>% 
-    select(name,bikesAvailable, value) %>% 
-    right_join(points,.)-> points2
+    select(id,name,bikesAvailable, value) %>% 
+    right_join(points,.) -> points2
   
   pal <- colorNumeric(
     palette = "RdYlGn",
     domain = NULL)
+
+  # labels <- sprintf(
+  #   "<a href='http://82.181.150.141/tellinkiappi/?_inputs_&distance=750&sidebarCollapsed=false&sidebarItemExpanded=null&tellinki=\"%s\"'>%s</a><br />%s",
+  #   stringr::str_pad(as.character(points2$id), 3, pad = '0'),
+  #   points2$name,
+  #   as.character(points2$bikesAvailable)
+  # ) %>% lapply(htmltools::HTML)
+  
     
   leaflet(points2) %>% 
     leaflet::addProviderTiles(providers$CartoDB.Positron) %>% 
     addCircleMarkers(color = ~pal(sqrt(bikesAvailable)), 
                      label = ~paste(name,bikesAvailable), 
-                     labelOptions = labelOptions(noHide = T, direction = "auto",  
+                     labelOptions = labelOptions(noHide = T, direction = "auto",
                                                  style = list(
                                                    "color" = "black",
                                                    "font-family" = "Source Sans Pro",
@@ -176,7 +184,8 @@ output$map_realtime <- renderLeaflet({
                                                    "border-color" = "rgba(0,0,0,0.5)",
                                                    "background" = "rgba(235, 235, 235, 0.61)"
                                                  )
-                                                 ))
+                                                 )
+  )
 
 
 })
