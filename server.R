@@ -195,7 +195,7 @@ output$plot_forecast <- renderPlot({
   
   withProgress(message = 'Odota hetki', value = 0, {
   incProgress(1/3, detail = "Louhitaan dataa")
-  d12 <- readRDS(glue::glue("/home/aurelius/local_data/kaupunkifillari_data/ennustedatat/{input$tellinki}.RDS"))
+  d12 <- readr::read_rds(glue::glue("/home/aurelius/local_data/kaupunkifillari_data/ennustedatat/{input$tellinki}.RDS"))
   # d12 <- readRDS(glue::glue("~/local_data/kaupunkifillari_data/ennustedatat/107.RDS"))
   d12$group <- glue::glue("{d12$yday}{d12$year}")
   
