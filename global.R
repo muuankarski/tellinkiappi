@@ -1,7 +1,6 @@
 shiny::enableBookmarking(store = "url")
 
 library(shiny)
-library(shinydashboard)
 library(dplyr)
 library(sf)
 library(leaflet)
@@ -9,6 +8,7 @@ library(jsonlite)
 library(knitr)
 library(kableExtra)
 library(lubridate)
+library(shinythemes)
 
 # setwd("~/sovellukset/tellinkiappi/")
 # library(jsonlite)

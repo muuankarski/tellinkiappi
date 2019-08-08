@@ -1,60 +1,55 @@
 ## ui.R ##
 function(request) {
-  
-  dashboardPage(
-    dashboardHeader(
-      title = "Tellinkiappi"),
-      dashboardSidebar(
-      selectInput("tellinki", "Valitse tellinki", choices = tellingit, selected = "082"),
-      sliderInput("distance", "Montako metriä jaksat kävellä", min = 0, max = 25000,
+# shinyUI(  
+  fluidPage(
+    # titlePanel("Tellinkiappi"),
+    theme = shinythemes::shinytheme(theme = "cosmo"),
+    
+    tags$head(
+      tags$link(rel = "stylesheet", type = "text/css", href = "custom.css")
+    ),
+    
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("tellinki", 
+                  # label = NULL,
+                  label = "Valitse tellinki",
+                  choices = tellingit, 
+                  selected = "082"),
+      sliderInput("distance", "Etäisyys (m)", min = 0, max = 25000,
       step = 500, value = 1000)
-      # ,selectInput("ajankohta", "Valitse ajankohta", choices = c("nyt", "mennyt"))
-      ,shiny::bookmarkButton(label = "Jaa valinnat")
+      ,shiny::bookmarkButton(label = "Tallenna valinnat")
 
   ),
-    dashboardBody(
-      ### changing theme
-      dashboardthemes::shinyDashboardThemes(
-        theme = "grey_light"
-      ),
-      
+    mainPanel(
       fluidRow(
-      #   ),
-      # fluidRow(
-      #   selectInput("tellinki", "Valitse tellinki", choices = tellingit, selected = 85),
-      #   sliderInput("distance", "Montako metriä jaksat kävellä", min = 0, max = 1500, 
-      #               step = 100, value = 700)
-      #   # ,selectInput("ajankohta", "Valitse ajankohta", choices = c("nyt", "mennyt"))
-      #   ,shiny::bookmarkButton(label = "Jaa valinnat"),
         tabsetPanel(
-          tabPanel("Vapaana"
-                   # ,tags$h4("Pyöriä vapaana:")
-                   # ,tableOutput("tbl_realtime")
+          tabPanel("Listaus"
                    ,uiOutput("tbl_realtime")
 
           ),
           tabPanel("Kartta"
-                   # ,tags$h4("Pyöriä vapaana:")
-                   # ,valueBoxOutput("box_realtime")
                    ,leafletOutput("map_realtime")
           ),
           tabPanel("Trendi"
-                   # ,tags$h4("Lineraarinen regressio:")
-                   # ,valueBoxOutput("box_realtime")
-                   # ,tableOutput("plot_forecast")
-                   ,plotOutput("plot_forecast", height = "400", width = "auto")
+                   ,shinycssloaders::withSpinner(plotOutput("plot_forecast", height = "400", width = "auto"))
           ),
           tabPanel("Sää",
                    tags$h4("Tällä hetkellä:")
-                   ,tableOutput("saa_realtime")
+                   ,shinycssloaders::withSpinner(tableOutput("saa_realtime"))
                    ,tags$h4("Ennuste Helsinki:")
-                   ,tableOutput("saa_ennuste")
+                   ,shinycssloaders::withSpinner(tableOutput("saa_ennuste"))
+          ),
+          tabPanel("Info"
+                   ,tags$br()
+                   ,tags$p("Tellinkiappi on tarkoitettu 'vakitellinkien' seuraamiseen. Valitse tellinki ja tallenna urli suosikkeihin.")
+                   ,tags$a("Lähetä sähköpostia kehittäjälle!", href = 'mailto:markus.kainu@kapsi.fi?subject=Tellinkiappi')
           )
         )
         
       )
 
       )
-  )
+  ))
 }
-
+# )
