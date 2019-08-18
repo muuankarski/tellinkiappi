@@ -211,7 +211,7 @@ output$plot_forecast <- renderPlot({
   Sys.setlocale("LC_ALL" ,"fi_FI.UTF-8")
   if (weekdays(time_now) %in% c("lauantai","sunnuntai")){
     viikonpaivat <- c("lauantai","sunnuntai")
-    otsikon_alku <- "Viikoloppujen"
+    otsikon_alku <- "Viikonloppujen"
   } else {
     viikonpaivat <- c("maanantai","tiistai","keskiviikko","torstai","perjantai")
     otsikon_alku <- "Arkipäivien"
