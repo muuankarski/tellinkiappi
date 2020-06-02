@@ -2,8 +2,10 @@
 .Rhistory
 .RData
 .Ruserdata
-run.R
 tst.R
 tellinkiappi.Rproj
 data
 paivadata.csv
+sparkdata.RDS
+ui2.R
+ui_bak.R
