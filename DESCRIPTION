@@ -1,0 +1,37 @@
+Package: tellinkiappi
+Title: Kaupunkipyöräjärjestelmän tiedot verkossa
+Version: 0.1.0
+Authors@R: person('Markus', 'Kainu', email = 'markus.kainu@kapsi.fi', role = c('cre', 'aut'))
+Description: Verkkosovellus Helsingin kaupunkin kaupunkipyöräjärjestelmän tietojen esittämiseen
+License: MIT + file LICENSE
+Imports: 
+    bslib,
+    config (>= 0.3.1),
+    dplyr,
+    ggplot2,
+    ggtext,
+    glue,
+    golem (>= 0.3.2),
+    hrbrthemes,
+    htmltools,
+    leaflet,
+    leaflet.extras,
+    lubridate,
+    metathis,
+    patchwork,
+    pkgload,
+    ragg,
+    readr,
+    sf,
+    shiny (>= 1.7.1),
+    shinycssloaders,
+    sparkline
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.2
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+VignetteBuilder: knitr
