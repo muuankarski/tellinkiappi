@@ -31,3 +31,7 @@ Voit asentaa kehitysversion seuraavasti:
 remotes::install_github("muuankarski/tellinkiappi")
 ```
 
+****
+
+- &copy; 2017-2022 Markus Kainu MIT-lisenssi
+

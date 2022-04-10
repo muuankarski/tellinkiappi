@@ -21,3 +21,7 @@ Voit asentaa kehitysversion seuraavasti:
 ``` r
 remotes::install_github("muuankarski/tellinkiappi")
 ```
+
+------------------------------------------------------------------------
+
+-   © 2017-2022 Markus Kainu MIT-lisenssi
