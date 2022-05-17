@@ -37,7 +37,7 @@ usethis::use_package( "readr" )
 usethis::use_package( "sf" )
 usethis::use_package( "shiny" )
 usethis::use_package( "sparkline" )
-usethis::use_package( "DT" )
+# usethis::use_package( "DT" )
 
 
 # usethis::use_package( "shinycssloaders" )

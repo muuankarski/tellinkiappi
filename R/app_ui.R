@@ -71,6 +71,9 @@ golem_add_external_resources <- function() {
     app_sys("app/www")
   )
   tags$head(
+    tags$html(HTML('
+                      <script defer data-domain="muuankarski.shinyapps.io/tellinkiappi" src="http://89.27.10.179:8000/js/plausible.js"></script>
+                      ')),
     tags$style('
 .selectize-dropdown, .selectize-input, .selectize-input input {
     color: #FFF!important;

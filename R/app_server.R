@@ -38,7 +38,7 @@ app_server <- function(input, output, session) {
     d <- jsonlite::fromJSON(txt = "http://api.digitransit.fi/routing/v1/routers/hsl/bike_rental", simplifyDataFrame = TRUE)[[1]]
     dd <- d[,c("id","name","x","y","bikesAvailable","spacesAvailable", "state")]
     dd <- dd[dd$state == "Station on",]
-    dd$id <- as.integer(dd$id)
+    # dd$id <- as.integer(dd$id)
     data_just_nyt <- dd
     return(data_just_nyt)
   })
@@ -117,7 +117,7 @@ app_server <- function(input, output, session) {
       tellingit <- get_tellingit()
       nms <- names(tellingit)
       nsm <- sub("Hylkeenpyytäjänkatu","Hernesaarenranta", nms)
-      tellingit <- as.integer(tellingit)
+      # tellingit <- as.integer(tellingit)
       names(tellingit) <- nms
       tellingit <- sort(tellingit)
 
@@ -149,7 +149,7 @@ app_server <- function(input, output, session) {
     tellingit <- get_tellingit()
     nms <- names(tellingit)
     nsm <- sub("Hylkeenpyytäjänkatu","Hernesaarenranta", nms)
-    tellingit <- as.integer(tellingit)
+    # tellingit <- as.integer(tellingit)
     names(tellingit) <- nms
     tellingit <- sort(tellingit)
 
@@ -208,7 +208,7 @@ app_server <- function(input, output, session) {
 
       req(input$value_tellinki_haku)
       distanssi <- get_distanssi()
-      distanssi[distanssi$id_x == as.integer(input$value_tellinki_haku),] %>%
+      distanssi[distanssi$id_x == input$value_tellinki_haku,] %>%
         filter(value <= input$value_tellinki_distance) %>%
         select(id_y,value) -> lahitellingit
 
@@ -308,7 +308,7 @@ app_server <- function(input, output, session) {
         setNames(c("etäisyys (m)","id","nimi","vapaana"))
 
     }
-    dat_tbl$nimi <- paste0(dat_tbl$nimi, " (", dat_tbl$id, ")")
+    # dat_tbl$nimi <- paste0(dat_tbl$nimi, " (", dat_tbl$id, ")")
     return(dat_tbl)
   })
 
@@ -509,12 +509,18 @@ app_server <- function(input, output, session) {
 
     plotlist <- list()
     for (i in 1:length(tellinki_id)){
-      gg_smooth <- readr::read_rds(glue::glue("https://data.markuskainu.fi/kaupunkifillari/ennustedatat/gg/{str_pad(tellinki_id[i], width = 3, pad = '0')}.RDS"))
-      data_nyt2 <- data_nyt %>% filter(id %in% tellinki_id[i])
 
-      ggplot() +
-        geom_smooth(aes_all(names(gg_smooth)), data=gg_smooth, stat="identity", color = "#f89406") +
-        geom_line(data = data_nyt2,
+      data_nyt2 <- data_nyt %>% filter(id %in% tellinki_id[i])
+      smooth_path <- glue::glue("https://data.markuskainu.fi/kaupunkifillari/ennustedatat/gg/{tellinki_id[i]}.RDS")
+      status <- httr::status_code(httr::GET(smooth_path))
+
+
+      p <- ggplot()
+      if (httr::status_code(status) == 200){
+        gg_smooth <- readr::read_rds(smooth_path)
+        p <- p + geom_smooth(aes_all(names(gg_smooth)), data=gg_smooth, stat="identity", color = "#f89406")
+      }
+        p + geom_line(data = data_nyt2,
                   aes(x=aika,y=bikesAvailable,group=1), color = "#007bff") +
         # geom_point(data = data_nyt2[nrow(data_nyt2),],
         #            aes(x = aika, y=bikesAvailable, group = 1),
@@ -535,7 +541,7 @@ app_server <- function(input, output, session) {
                    family = "Roboto Mono",
                    nudge_y = 2,
                    alpha = .8) +
-        labs(title = glue::glue("{unique(data_nyt2$name)} ({tellinki_id[i]})"),
+        labs(title = glue::glue("{unique(data_nyt2$name)}"),
              y = NULL) +
 
         # ggplot(cars, aes(x = speed, y = dist)) +
@@ -556,7 +562,7 @@ app_server <- function(input, output, session) {
         scale_y_continuous(position = "left", limits = c(0,max_y)) -> plot
       plot -> plotlist[[i]]
     }
-    wrap_plots(plotlist, ncol = 2) +
+    patchwork::wrap_plots(plotlist, ncol = 2) +
       plot_annotation(
         title = glue::glue("Vapaiden pyörien määrä tänään\n aamusta kello {format(time_now, format = '%H:%M')}"),
         subtitle = glue::glue("{otsikon_alku} trendi on laskettu \nkausilta 2017-2022 kerätystä datasta\n
